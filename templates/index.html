@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AQI Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(120deg, #89f7fe, #66a6ff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.2);
+            width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #222;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>AQI Prediction</h1>
+
+        <form action="/predict" method="POST">
+
+            <label for="PM2.5">PM2.5 (µg/m³):</label>
+            <input type="number" step="any" name="PM2.5" required>
+
+            <label for="PM10">PM10 (µg/m³):</label>
+            <input type="number" step="any" name="PM10" required>
+
+            <!-- ✅ Newly added fields (right after PM10) -->
+            <label for="NO">NO (µg/m³):</label>
+            <input type="number" step="any" name="NO" required>
+
+            <label for="NOx">NOx (µg/m³):</label>
+            <input type="number" step="any" name="NOx" required>
+
+            <label for="NH3">NH₃ (µg/m³):</label>
+            <input type="number" step="any" name="NH3" required>
+
+            <!-- Existing fields continue -->
+            <label for="NO2">NO₂ (µg/m³):</label>
+            <input type="number" step="any" name="NO2" required>
+
+            <label for="SO2">SO₂ (µg/m³):</label>
+            <input type="number" step="any" name="SO2" required>
+
+            <label for="CO">CO (mg/m³):</label>
+            <input type="number" step="any" name="CO" required>
+
+            <label for="O3">O₃ (µg/m³):</label>
+            <input type="number" step="any" name="O3" required>
+
+            <label for="State">State:</label>
+            <select id="State" name="State" required>
+                <option value="">-- Select State --</option>
+            </select>
+
+            <label for="City">City:</label>
+            <select id="City" name="City" required>
+                <option value="">-- Select City --</option>
+            </select>
+
+            <button type="submit">Predict AQI</button>
+        </form>
+
+        {% if prediction_text %}
+            <div class="result">{{ prediction_text }}</div>
+        {% endif %}
+    </div>
+
+    <script>
+        // State-City mapping based on your dataset
+        const cityOptions = {
+            "Andhra Pradesh": ["Amaravati", "Rajamahendravaram", "Tirupati", "Vijayawada", "Visakhapatnam"],
+            "Assam": ["Guwahati"],
+            "Bihar": ["Gaya", "Hajipur", "Muzaffarpur", "Patna"],
+            "Chandigarh": ["Chandigarh"],
+            "Delhi": ["Delhi"],
+            "Gujarat": ["Ahmedabad", "Ankleshwar", "Gandhinagar", "Nandesari", "Vapi", "Vatva"],
+            "Haryana": ["Ambala", "Bahadurgarh", "Ballabgarh", "Bhiwani", "Dharuhera", "Faridabad", "Fatehabad", "Gurugram", "Hisar", "Jind", "Kaithal", "Karnal", "Kurukshetra", "Mandikhera", "Manesar", "Narnaul", "Palwal", "Panchkula", "Panipat", "Rohtak", "Sirsa", "Sonipat", "Yamuna Nagar"],
+            "Jharkhand": ["Jorapokhar"],
+            "Karnataka": ["Bagalkot", "Bengaluru", "Chamarajanagar", "Chikkaballapur", "Chikkamagaluru", "Hubballi", "Kalaburagi", "Mysuru", "Ramanagara", "Vijayapura", "Yadgir"],
+            "Kerala": ["Eloor", "Ernakulam", "Kannur", "Kochi", "Kollam", "Kozhikode", "Thiruvananthapuram"],
+            "Madhya Pradesh": ["Bhopal", "Damoh", "Dewas", "Gwalior", "Indore", "Jabalpur", "Katni", "Maihar", "Mandideep", "Pithampur", "Ratlam", "Sagar", "Satna", "Singrauli", "Ujjain"],
+            "Maharashtra": ["Aurangabad", "Chandrapur", "Kalyan", "Mumbai", "Nagpur", "Nashik", "Navi Mumbai", "Pune", "Solapur", "Thane"],
+            "Meghalaya": ["Shillong"],
+            "Mizoram": ["Aizawl"],
+            "Odisha": ["Brajrajnagar", "Talcher"],
+            "Punjab": ["Amritsar", "Bathinda", "Jalandhar", "Khanna", "Ludhiana", "Gobindgarh", "Patiala", "Rupnagar"],
+            "Rajasthan": ["Alwar", "Ajmer", "Jaipur", "Jodhpur", "Kota", "Pali", "Udaipur"],
+            "Tamil Nadu": ["Chennai", "Coimbatore"],
+            "Telangana": ["Hyderabad"],
+            "Uttar Pradesh": ["Agra", "Baghpat", "Bulandshahr", "Ghaziabad", "Greater Noida", "Hapur", "Kanpur", "Lucknow", "Meerut", "Moradabad", "Muzzaffarnagar", "Noida", "Varanasi"],
+            "West Bengal": ["Asansol", "Durgapur", "Haldia", "Howrah", "Kolkata", "Siliguri"]
+        };
+
+        const stateSelect = document.getElementById("State");
+        const citySelect = document.getElementById("City");
+
+        for (let state in cityOptions) {
+            let option = document.createElement("option");
+            option.value = state;
+            option.textContent = state;
+            stateSelect.appendChild(option);
+        }
+
+        stateSelect.addEventListener("change", function () {
+            const selectedState = this.value;
+            const cities = cityOptions[selectedState] || [];
+
+            citySelect.innerHTML = '<option value="">-- Select City --</option>';
+            cities.forEach(city => {
+                const option = document.createElement("option");
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+        });
+    </script>
+
+</body>
+</html>

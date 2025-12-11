@@ -1,0 +1,6 @@
+.idea
+catboost_info
+.venv
+models
+station_day.csv
+stations.csv
