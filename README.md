@@ -5,7 +5,7 @@ Boosting models to generate accurate AQI predictions based on multi-city polluti
 The trained model is integrated into a Flask-based web application that supports real-time inference, enabling users to input pollutant values and receive immediate AQI predictions
 through a simple web interface.
 
- **ey Features**
+ **Key Features**
 
 End-to-end machine learning pipeline (data preprocessing → feature engineering → model training → evaluation → deployment)Ensemble learning using Voting Regressor for improved predictive stability
 Trained on 100,000+ pollution records across multiple cities
